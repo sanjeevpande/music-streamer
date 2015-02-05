@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+		#getList {
+			margin: 0 auto;
+			display: block;
+			height: 40px;
+			border-radius: 4px;
+			border: none;
+			box-shadow: 0px 5px 6px grey;
+			font-weight: bold;
+			font-family: cursive;
+			font-size: 16px;
+			width: 200px;
+			cursor: pointer;
+		}
+		#songsList li{
+			cursor: pointer;
+			text-decoration: underline;
+			text-shadow: 0 1px 4px grey;
+			padding: 10px;
+			width: 20%;
+		}
+		#audio{
+			height: 50px;
+			width: 100px;
+			background-color: red;
+		}
+	</style>
+</head>
+<body>
+	<div>
+		<input type="button" id="getList" value="Get List Of Songs !">
+		<ul id="songsList"></ul>
+		<div>
+			<audio controls="" autoplay="">
+				<source id="audio" type="audio/mpeg">
+			</audio>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+
+		document.getElementById('getList').addEventListener('click', function(){
+
+			this.value = 'Click on a song to play.';
+			document.getElementById('songsList').innerHTML = "";
+
+			var xmlhttp = new XMLHttpRequest(),
+				url = '/getsongs';
+
+			xmlhttp.onreadystatechange = function(){
+				if(xmlhttp.readyState === 4 && xmlhttp.status === 200){
+					var list = JSON.parse(xmlhttp.responseText);
+					displaySongList(list);
+				}
+			}
+			xmlhttp.open('GET', url, true);
+			xmlhttp.send();
+
+		});
+
+		function displaySongList(list){
+
+			var songname = list.songname,
+				songpath = list.songpath;
+
+			for(var i = 0; i < songname.length; i++){
+				var liElem = document.createElement('li');
+				liElem.className = "songs";
+				liElem.setAttribute('data-songname', songname[i]);
+				liElem.setAttribute('data-songpath', songpath[i]);
+				liElem.innerHTML = songname[i];
+				document.getElementById('songsList').appendChild(liElem);
+			}
+
+			bindSongEvents();
+		}
+
+		function bindSongEvents(){
+
+			var songs = document.getElementsByClassName('songs');
+			for(var i = 0; i < songs.length; i++){
+				songs[i].addEventListener('click', function(){
+					streamAudio(this);
+				});
+			}
+		}
+
+		function streamAudio(song){
+			
+			var songname = song.getAttribute('data-songname'),
+				songpath = song.getAttribute('data-songpath');
+
+			var xmlhttp = new XMLHttpRequest(),
+				url = '/streamaudio?songpath=' + songpath;
+			xmlhttp.onreadystatechange = function(){
+				if(xmlhttp.readyState === 4 && xmlhttp.status === 200){
+					document.getElementById('audio').setAttribute('src', xmlhttp.responseURL);
+					document.getElementById('audio').parentElement.load();
+				}
+			}
+			xmlhttp.open('GET', url, true);
+			xmlhttp.send();
+		}
+
+		function playSong(song){
+			
+			var songname = song.getAttribute('data-songname'),
+				songpath = song.getAttribute('data-songpath');
+
+			var xmlhttp = new XMLHttpRequest(),
+				url = '/playsong';
+			xmlhttp.onreadystatechange = function(){
+				if(xmlhttp.readyState === 4 && xmlhttp.status === 200){
+					console.log("a");
+				}
+			}
+			xmlhttp.open('post', url, true);
+			xmlhttp.setRequestHeader('Content-Type', 'application/json');
+			xmlhttp.send(JSON.stringify({songname : songname, songpath : songpath}));
+		}
+
+	</script>
+
+
+</body>
+</html>
